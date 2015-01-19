@@ -1,75 +1,109 @@
 #!/usr/local/bin/node
+
 var bitcore = require('bitcore');
 var networks = bitcore.Networks.livenet;
-
 var cmd = process.argv[2];
+var argv = process.argv.slice(3, process.argv.length);
 var result = {
-	'success' : false,
+    'success': false,
 };
-
-try{
-	switch(cmd){
-		case 'create_private_key':
-			create_private_key();
-			break;
-		case 'create_address':
-			var arg_start_idx = 3
-			if(process.argv[arg_start_idx] == '-t'){
-				networks = bitcore.Networks.testnet;
-				arg_start_idx = 4;
-			}
-			var private_key = process.argv[arg_start_idx] ;
-			if (private_key == undefined)
-				throw new Error('without private key');
-			create_address(private_key);
-			break;
-		case 'create_multisign_address':
-			var arg_start_idx = 3
-			if(process.argv[arg_start_idx] == '-t'){
-				networks = bitcore.Networks.testnet;
-				arg_start_idx = 4;
-			}
-			if(process.argv[arg_start_idx] == undefined || process.argv[arg_start_idx + 1] == undefined)
-				throw new Error('Least two private key');
-			var threshold = parseInt(process.argv[process.argv.length - 1]);
-			if(typeof parseInt(threshold) != 'number')
-				throw new Error('without threshold');
-			var private_keys = process.argv.slice(arg_start_idx, process.argv.length - 1);
-			if(private_keys.length < 2)
-				throw new Error('without private keys');
-			create_multisign_address(private_keys, threshold);
-			break;
-		default:
-			throw new Error('<command> <arg1> <arg2> ...');
-	}
-}catch(err){
-	fail_output(err);
+try {
+    switch (cmd) {
+        case 'create_privatekey':
+            create_private_key();
+            break;
+        case 'to_address':
+            if (argv[0] == '-t') {
+                networks = bitcore.Networks.testnet;
+                argv = argv.slice(1, process.argv.length);
+            }
+            var private_key = argv[0];
+            if (private_key == undefined) throw new Error('without private key');
+            create_address(private_key);
+            break;
+        case 'to_publickey':
+            success_output(new bitcore.PrivateKey(argv[0]).toPublicKey().toString());
+            break;
+        case 'to_multisign_address':
+            if (argv[0] == '-t') {
+                networks = bitcore.Networks.testnet;
+                argv = argv.slice(1, process.argv.length);
+            }
+            if (argv[0] == undefined || argv[1] == undefined) throw new Error('Least two private key');
+            var threshold = parseInt(argv[argv.length - 1]);
+            if (typeof parseInt(threshold) != 'number') throw new Error('without threshold');
+            var private_keys = argv.slice(0, argv.length - 1);
+            if (private_keys.length < 2) throw new Error('without private keys');
+            create_multisign_address(private_keys, threshold);
+            break;
+        case 'transaction':
+            if (argv[0] == '-t') {
+                networks = bitcore.Networks.testnet;
+                argv = argv.slice(1, process.argv.length);
+            }
+            transaction(argv[0], argv[1].split(','), argv[2].split(','), argv[3], argv[4]);
+            break;
+        default:
+            throw new Error('<command> <arg1> <arg2> ...');
+    }
+} catch (err) {
+    fail_output(err);
 }
 
-function create_private_key () {
-	success_output(new bitcore.PrivateKey().toWIF());
+function create_private_key() {
+    success_output(new bitcore.PrivateKey().toWIF());
 }
 
-function create_address (private_key){
-	success_output(new bitcore.PrivateKey(private_key,  networks).toAddress().toString());
+function create_address(private_key) {
+    success_output(new bitcore.PrivateKey(private_key, networks).toAddress().toString());
 }
 
-function create_multisign_address (private_keys, threshold) {
-	var private_keys_obj = Array();
-	for (var i = 0; i < private_keys.length; i++) {
-		private_keys_obj[i] = new bitcore.PrivateKey(private_keys[i]);
-	};
-	success_output(new bitcore.Address.createMultisig(private_keys_obj, threshold, networks).toString());
+function create_multisign_address(private_keys, threshold) {
+    var private_keys_obj = privatekey_str_to_obj(private_keys);
+    success_output(new bitcore.Address.createMultisig(private_keys_obj, threshold, networks).toString());
 }
 
-function success_output(data){
-	result['success'] = true;
-	result['data'] = data;
-	console.log(JSON.stringify(result));
+function privatekey_str_to_obj(private_keys) {
+    var private_keys_obj = Array();
+    for (var i = 0; i < private_keys.length; i++) {
+        private_keys_obj[i] = new bitcore.PrivateKey(private_keys[i]);
+    };
+    return private_keys_obj;
 }
 
-function fail_output(message){
-	result['data'] = null;
-	result['message'] = message.toString();
-	console.log(JSON.stringify(result));
+function success_output(data) {
+    result['success'] = true;
+    result['data'] = data;
+    console.log(JSON.stringify(result));
+}
+
+function fail_output(reason) {
+    result['data'] = null;
+    result['reason'] = reason.toString();
+    console.log(JSON.stringify(result));
+}
+
+function transaction(fromAddress, privateKeys, publicKeys, toAddress, amount) {
+    var insight = new bitcore.transport.explorers.Insight(networks);
+    var amount = bitcore.Unit.fromBTC(amount).toSatoshis();
+    for (var i = 0; i < privateKeys.length; i++) {
+        publicKeys.push(bitcore.PrivateKey.fromString(privateKeys[i]).toPublicKey().toString());
+    }
+    insight.getUnspentUtxos(fromAddress, function(err, utxos) {
+        if (err) {
+            fail_output(err);
+        } else {
+            var transaction = new bitcore.Transaction().from(utxos, publicKeys, privateKeys.length) // Feed information about what unspent outputs one can use
+            .to(toAddress, amount) // Add an output with the given amount of satoshis
+            .change(fromAddress) // Sets up a change address where the rest of the funds will go
+            .sign(privateKeys); // Signs all the inputs it can
+            insight.broadcast(transaction, function(err, returnedTxId) {
+                if (err) {
+                    fail_output(err);
+                } else {
+                    success_output(returnedTxId);
+                }
+            });
+        }
+    });
 }

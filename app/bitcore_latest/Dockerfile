@@ -1,7 +1,8 @@
 FROM rolymobile/nodejs:0.10.35
 
 COPY bitcore /tmp/app/bitcore
-RUN apt-get install -qqy \
+RUN apt-get update -qqy &&\
+	apt-get install -qqy \
 	git && \
 	rm -rf /var/lib/apt/lists/* && \
 	npm install bitcore && \
