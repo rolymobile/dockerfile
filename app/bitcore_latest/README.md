@@ -2,35 +2,55 @@
 ```
 docker run --rm rolymobile/bitcore <command>
 ```
-## Command ##
-#### Create Private Key ####
-```sh
-bash$ docker run --rm rolymobile/bitcore create_private_key
-```
-**response**
+## Response Format##
+**success**  
 ```json
-{"success":true,"data":"Kzu53FTtdeKtzgaeagi7zs9cM6xE1RtxztCGZqxWzZmV1ztNtgUe"}
+{
+    "success":true,
+    "data":"XXX"
+}
+```
+**fail**
+```json
+{
+    "success":false,
+    "data":null,
+    "reason":"XXX"
+}
 ```
 
-#### Create Address ####
+## Command ##
+#### Create Private Key ####
+`-t` for testnet
+```sh
+bash$ docker run --rm rolymobile/bitcore create_privatekey [-t]
+```
+
+**response**  
+`data` - private key
+
+#### Generate Public Key ####
+```json
+docker run --rm rolymobile/bitcore to_publickey <privateKey>
+```
+**response**  
+`data` - public key
+
+#### Generate Address ####
 `-t` for testnet
 ```sh
 bash$ docker run --rm rolymobile/bitcore to_address [-t] <privateKey>
 ```
-***response:***
-```json
-{"success":true,"data":"13Eo8bAZXuv5WukDAa7HqsytMUtMiie2rn"}
-```
+***response:***  
+`data` - address
 
-#### Create Multisig Address ####
+#### Generate Multisig Address ####
 `-t` for testnet
 ```sh
 bash$ docker run --rm rolymobile/bitcore to_multisign_address  [-t] <private keys...> <threshold>
 ```
-***response:***
-```json
-{"success":true,"data":"2NG4H5Bf7JkJ5cub76eudYR9jEWWtuPaWYw"}
-```
+***response:***  
+`data` - address
 
 #### Transaction ####
 **Single sign**
@@ -42,6 +62,9 @@ bash$ docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKey> 
 `<toAddress>` - destination address  
 `<amount>` - BTC amount
 
+***response:***  
+`data` - txid
+
 **Multi sign**
 ```sh
 bash$ docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKeys> <publicKeys> <toAddress> <amount>
@@ -51,6 +74,9 @@ bash$ docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKeys>
 `<publicKeys>` -  public key separated by comma  
 `<toAddress>` - destination address  
 `<amount>` - BTC amount  
+
+***response:***  
+`data` - txid
 
 ######Example:  
 3 of 4  
