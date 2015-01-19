@@ -1,5 +1,5 @@
 # Usage #
-```
+```sh
 docker run --rm rolymobile/bitcore <command>
 ```
 ## Response Format##
@@ -23,14 +23,14 @@ docker run --rm rolymobile/bitcore <command>
 #### Create Private Key ####
 `-t` for testnet
 ```sh
-bash$ docker run --rm rolymobile/bitcore create_privatekey [-t]
+docker run --rm rolymobile/bitcore create_privatekey [-t]
 ```
 
 **response**  
 `data` - private key
 
 #### Generate Public Key ####
-```json
+```sh
 docker run --rm rolymobile/bitcore to_publickey <privateKey>
 ```
 **response**  
@@ -39,7 +39,7 @@ docker run --rm rolymobile/bitcore to_publickey <privateKey>
 #### Generate Address ####
 `-t` for testnet
 ```sh
-bash$ docker run --rm rolymobile/bitcore to_address [-t] <privateKey>
+docker run --rm rolymobile/bitcore to_address [-t] <privateKey>
 ```
 ***response:***  
 `data` - address
@@ -47,7 +47,7 @@ bash$ docker run --rm rolymobile/bitcore to_address [-t] <privateKey>
 #### Generate Multisig Address ####
 `-t` for testnet
 ```sh
-bash$ docker run --rm rolymobile/bitcore to_multisign_address  [-t] <private keys...> <threshold>
+docker run --rm rolymobile/bitcore to_multisign_address  [-t] <private keys...> <threshold>
 ```
 ***response:***  
 `data` - address
@@ -55,7 +55,7 @@ bash$ docker run --rm rolymobile/bitcore to_multisign_address  [-t] <private key
 #### Transaction ####
 **Single sign**
 ```sh
-bash$ docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKey> <toAddress> <amount>
+docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKey> <toAddress> <amount>
 ```
 `<fromAddress>` - source address  
 `<privateKeys>` - private key  
@@ -67,7 +67,7 @@ bash$ docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKey> 
 
 **Multi sign**
 ```sh
-bash$ docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKeys> <publicKeys> <toAddress> <amount>
+docker run --rm rolymobile/bitcore transaction <fromAddress> <privateKeys> <publicKeys> <toAddress> <amount>
 ```
 `<fromAddress>` - source address  
 `<privateKeys>` - private key separated by comma  
