@@ -2,7 +2,6 @@ FROM ubuntu:14.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
-# Install Python compile needs
 RUN \
 	apt-get update -qqy && \
 	apt-get -qqy upgrade && \
