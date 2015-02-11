@@ -10,4 +10,5 @@ RUN apt-get update -qqy &&\
 	npm install -l && \
 	chmod +x /tmp/app/bitcore
 ENTRYPOINT ["/tmp/app/bitcore"]
+EXPOSE 1337
 CMD []
