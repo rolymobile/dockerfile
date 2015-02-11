@@ -4,13 +4,10 @@ var bitcore = require('bitcore');
 var networks = bitcore.Networks.livenet;
 var cmd = process.argv[2];
 var argv = process.argv.slice(3, process.argv.length);
-var result = {
-    'success': false
-};
 var daemon = false;
 
 //arg for daemon
-if (argv[0] == '-d') {
+if (cmd == 'daemon') {
     daemon = true;
     argv = argv.slice(1, process.argv.length);
 }
@@ -23,46 +20,58 @@ if (argv[0] == '-t') {
 
 if (daemon) {
     var http = require('http');
+    var url = require('url');
+
     http.createServer(function (req, res) {
 
         res.writeHead(200, {'Content-Type': 'application/json'});
 
-        if (req.request == 'undefined') {
-            res.end(err);
+        urlData = url.parse(req.url, true);
+        data=urlData.query.request;
+
+        if (typeof data === 'undefined') {
+            res.end(fail_output('undefined'));
             return
         }
 
-        argv = req.request;
+        var argv = JSON.parse(data);
         cmd = argv[0];
         argv = argv.slice(1, process.argv.length);
 
-        try {
-            res.end(handleRequest(cmd, argv));
-        } catch (err) {
-            res.end(err);
+        if (argv[0] == '-t') {
+            networks = bitcore.Networks.testnet;
+            argv = argv.slice(1, process.argv.length);
+        } else {
+            networks = bitcore.Networks.livenet;
         }
 
-    }).listen(1337, '127.0.0.1');
+        try {
+            res.end(success_output(handleRequest(cmd, argv)));
+        } catch (err) {
+            res.end(fail_output(err.toString()));
+        }
+
+    }).listen(1337, '0.0.0.0');
 } else {
     try {
-        success_output(handleRequest(cmd, argv));
+        console.log(success_output(handleRequest(cmd, argv)));
     } catch (err) {
-        fail_output(err);
+        console.log(fail_output(err));
     }
 }
 
 function handleRequest(cmd, argv) {
     switch (cmd) {
         case 'create_privatekey':
-            create_private_key();
+            return create_private_key();
             break;
         case 'to_address':
             var private_key = argv[0];
             if (private_key == undefined) throw new Error('without private key');
-            create_address(private_key);
+            return create_address(private_key);
             break;
         case 'to_publickey':
-            success_output(new bitcore.PrivateKey(argv[0]).toPublicKey().toString());
+            return new bitcore.PrivateKey(argv[0]).toPublicKey().toString();
             break;
         case 'to_multisign_address':
             if (argv[0] == undefined || argv[1] == undefined) throw new Error('Least two private key');
@@ -70,13 +79,13 @@ function handleRequest(cmd, argv) {
             if (typeof parseInt(threshold) != 'number') throw new Error('without threshold');
             var private_keys = argv.slice(0, argv.length - 1);
             if (private_keys.length < 2) throw new Error('without private keys');
-            create_multisign_address(private_keys, threshold);
+            return create_multisign_address(private_keys, threshold);
             break;
         case 'transaction':
-            transaction(argv[0], argv[1], argv[2], argv[3]);
+            return transaction(argv[0], argv[1], argv[2], argv[3]);
             break;
         case 'transaction_multisig':
-            transaction_multisig(argv[0], argv[1], argv[2], argv[3], argv[4]);
+            return transaction_multisig(argv[0], argv[1], argv[2], argv[3], argv[4]);
             break;
         default:
             throw new Error('<command> <arg1> <arg2> ...');
@@ -105,15 +114,18 @@ function privatekey_str_to_obj(private_keys) {
 }
 
 function success_output(data) {
+    var result = {};
     result['success'] = true;
     result['data'] = data;
-    console.log(JSON.stringify(result));
+    return JSON.stringify(result);
 }
 
 function fail_output(reason) {
+    var result = {};
+    result['success'] = false;
     result['data'] = null;
     result['reason'] = reason.toString();
-    console.log(JSON.stringify(result));
+    return JSON.stringify(result);
 }
 
 function transaction(fromAddress, privateKey, toAddress, amount) {

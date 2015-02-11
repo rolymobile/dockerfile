@@ -5,7 +5,7 @@ docker run --rm rolymobile/bitcore <command>
 ```
 ## http daemon ##
 ```sh
-docker run -d -p 9090:1337 rolymobile/bitcore -d
+docker run -d -p 9090:1337 rolymobile/bitcore daemon
 ```
 ## Response Format##
 **success**  
