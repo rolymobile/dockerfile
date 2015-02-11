@@ -36,11 +36,11 @@ if (daemon) {
 
         var argv = JSON.parse(data);
         cmd = argv[0];
-        argv = argv.slice(1, process.argv.length);
+        argv = argv.slice(1, argv.length);
 
         if (argv[0] == '-t') {
             networks = bitcore.Networks.testnet;
-            argv = argv.slice(1, process.argv.length);
+            argv = argv.slice(1, argv.length);
         } else {
             networks = bitcore.Networks.livenet;
         }
