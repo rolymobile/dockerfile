@@ -1,0 +1,5 @@
+Host *
+  HostName github.com
+  User git
+  StrictHostKeyChecking no
+  IdentityFile /root/.ssh/id_rsa
