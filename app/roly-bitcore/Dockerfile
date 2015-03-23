@@ -2,7 +2,8 @@ FROM node:0.10
 
 WORKDIR /app
 RUN mkdir -p /root/.ssh
-ADD ssh/* /root/.ssh/
+COPY ssh/* /root/.ssh/
+
 RUN \
   chmod 600 /root/.ssh/id_rsa && \
   echo "Host github.com\n\tStrictHostKeyChecking no\n" >> /root/.ssh/config
@@ -12,8 +13,11 @@ RUN \
 
 RUN \
   npm install -g npm && \
+  npm install -g pm2 && \
+  pm2 dump && \
   git clone git@github.com:rolymobile/roly-bitcore.git /app && \
   npm install
 
-CMD ["npm","start"]
+#CMD ["npm","start"]
+CMD ["pm2","start","bin/www","--no-daemon"]
 EXPOSE 3000
