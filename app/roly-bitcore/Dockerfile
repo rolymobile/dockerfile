@@ -12,7 +12,7 @@ RUN \
 #RUN echo " IdentityFile ~/.ssh/id_rsa" >> /etc/ssh/ssh_config
 
 RUN \
-  npm install -g npm && \
+  npm install -g npm@^2.7.5 && \
   npm install -g pm2 && \
   pm2 dump && \
   git clone git@github.com:rolymobile/roly-bitcore.git /app && \
